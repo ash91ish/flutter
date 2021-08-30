@@ -1,181 +1,133 @@
-import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
-  runApp(Mp3Finder());
+  runApp(MyApp());
 }
 
-class Mp3Finder extends StatelessWidget {
-  const Mp3Finder({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Mp3Finder",
+      title: "get json",
       debugShowCheckedModeBanner: false,
-      home: MyApp(),
+      theme: ThemeData(primarySwatch: Colors.pink),
+      home: getjson(),
     );
   }
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+class getjson extends StatefulWidget {
+  const getjson({Key? key}) : super(key: key);
 
   @override
-  _MyAppState createState() => _MyAppState();
+  _getjsonState createState() => _getjsonState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _getjsonState extends State<getjson> {
   @override
   void initState() {
     super.initState();
-    getsongs();
+    jsondata();
   }
 
-  List songlist = [];
-  List mp3songlist = [];
-  AudioPlayer audioPlayer = AudioPlayer();
+  List<dynamic> jsonlist = [];
 
-  //find all data in download directory
-  void getsongs() async {
-    if (await Permission.storage.request().isGranted) {
-      Directory dir = Directory("/storage/emulated/0/Download");
-      try {
-        List<FileSystemEntity> songdata;
-        songdata = await dir.listSync(recursive: true, followLinks: false);
+  void jsondata() async {
+    if (Platform.isAndroid) {
+      http.Response response = await http
+          .get(Uri.parse("https://jsonplaceholder.typicode.com/posts"));
+      if (response.statusCode == 200) {
+        List<dynamic> jdata = jsonDecode(response.body);
         setState(() {
-          songlist.addAll(songdata);
-          findmp3();
+          jsonlist.addAll(jdata);
         });
-      } catch (e) {
-        print(e);
+        print(jdata.length);
       }
-    }
-  }
-
-  //separate only mp3 files
-  Future findmp3() async {
-    for (var i = 0; i < songlist.length; i++) {
-      // mp3 data true of false
-      bool mp3data =
-          songlist[i].toString().replaceAll("'", "").split(".").last == "mp3";
-
-      if (mp3data == true) {
-        setState(() {
-          mp3songlist.add(songlist[i]
-              .toString()
-              .replaceAll("File: ", "")
-              .replaceAll("'", ""));
-        });
-      }
-    }
-  }
-
-  playAudio(String path) {
-    try {
-      audioPlayer.play("$path");
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  pauseAudio() async {
-    try {
-      await audioPlayer.pause();
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  resumeAudio() async {
-    try {
-      await audioPlayer.resume();
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  stopAudio() async {
-    try {
-      await audioPlayer.stop();
-    } catch (e) {
-      print(e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarBrightness: Brightness.dark,
+        statusBarColor: Colors.transparent));
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.blue,
       appBar: AppBar(
+        elevation: 0.0,
+        backgroundColor: Colors.transparent,
         centerTitle: true,
-        title: Text("Mp3 Find And Play"),
+        title: Text("get json data"),
       ),
       body: Container(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SingleChildScrollView(
-              child: Column(
-                children: mp3songlist
-                    .map((e) => GestureDetector(
-                          onTap: () {
-                            playAudio(e.toString());
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(10),
-                            margin: EdgeInsets.all(5),
-                            color: Colors.indigo[200],
-                            width: MediaQuery.of(context).size.width,
-                            child: Text(
-                              e.toString().split("/").last,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
             Container(
-              margin: EdgeInsets.only(bottom: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              height: 220,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
                 children: [
-                  IconButton(
-                      onPressed: () {
-                        pauseAudio();
-                      },
-                      icon: Icon(
-                        Icons.pause,
-                        size: 40,
-                      )),
-                  IconButton(
-                      onPressed: () {
-                        resumeAudio();
-                      },
-                      icon: Icon(
-                        Icons.play_arrow,
-                        size: 40,
-                        color: Colors.green,
-                      )),
-                  IconButton(
-                      onPressed: () {
-                        stopAudio();
-                      },
-                      icon: Icon(
-                        Icons.stop,
-                        size: 40,
-                        color: Colors.red,
-                      ))
+                  for (var i = 0; i < 10; i++)
+                    Container(
+                      height: 200,
+                      width: MediaQuery.of(context).size.width / 1.05,
+                      alignment: Alignment.center,
+                      margin: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Text(""),
+                    )
                 ],
               ),
             ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: jsonlist
+                      .map((e) => Row(
+                            children: [
+                              Container(
+                                height: 120,
+                                width: MediaQuery.of(context).size.width / 2,
+                                margin: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: Text(""),
+                              ),
+                              Column(
+                                children: [
+                                  Container(
+                                      width: MediaQuery.of(context).size.width /
+                                          2.5,
+                                      child: Text(
+                                        "${e['title']}",
+                                        maxLines: 2,
+                                        style: TextStyle(fontSize: 18),
+                                      )),
+                                  Container(
+                                      width: MediaQuery.of(context).size.width /
+                                          2.5,
+                                      child: Text(
+                                        "${e['body']}",
+                                        maxLines: 2,
+                                        style: TextStyle(color: Colors.white),
+                                      )),
+                                ],
+                              )
+                            ],
+                          ))
+                      .toList(),
+                ),
+              ),
+            )
           ],
         ),
       ),
