@@ -58,7 +58,7 @@ class _MyAppState extends State<MyApp> {
   //separate only mp3 files
   Future findmp3() async {
     for (var i = 0; i < songlist.length; i++) {
-      // mp3 data true of false
+      // mp3 data true or false
       bool mp3data =
           songlist[i].toString().replaceAll("'", "").split(".").last == "mp3";
 
