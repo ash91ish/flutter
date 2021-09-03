@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,42 +14,38 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "get json",
+      title: "Create Folder",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.pink),
-      home: getjson(),
+      home: CreateFolder(),
     );
   }
 }
 
-class getjson extends StatefulWidget {
-  const getjson({Key? key}) : super(key: key);
+class CreateFolder extends StatefulWidget {
+  const CreateFolder({Key? key}) : super(key: key);
 
   @override
-  _getjsonState createState() => _getjsonState();
+  _CreateFolderState createState() => _CreateFolderState();
 }
 
-class _getjsonState extends State<getjson> {
+class _CreateFolderState extends State<CreateFolder> {
+  TextEditingController _controller = TextEditingController();
   @override
   void initState() {
     super.initState();
-    jsondata();
+    getpermission();
   }
 
-  List<dynamic> jsonlist = [];
+  Future getpermission() async {
+    await Permission.manageExternalStorage.request().isGranted;
+    await Permission.storage.request().isGranted;
+  }
 
-  void jsondata() async {
-    if (Platform.isAndroid) {
-      http.Response response = await http
-          .get(Uri.parse("https://jsonplaceholder.typicode.com/posts"));
-      if (response.statusCode == 200) {
-        List<dynamic> jdata = jsonDecode(response.body);
-        setState(() {
-          jsonlist.addAll(jdata);
-        });
-        print(jdata.length);
-      }
-    }
+  Future Folder(String data) async {
+    Directory dir =
+        await Directory("/storage/emulated/0/$data").create(recursive: false);
+    print(dir);
   }
 
   @override
@@ -60,74 +56,34 @@ class _getjsonState extends State<getjson> {
     return Scaffold(
       backgroundColor: Colors.blue,
       appBar: AppBar(
-        elevation: 0.0,
-        backgroundColor: Colors.transparent,
         centerTitle: true,
-        title: Text("get json data"),
+        backgroundColor: Colors.transparent,
+        title: Text("Create Folder"),
       ),
       body: Container(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              height: 220,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (var i = 0; i < 10; i++)
-                    Container(
-                      height: 200,
-                      width: MediaQuery.of(context).size.width / 1.05,
-                      alignment: Alignment.center,
-                      margin: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Text(""),
-                    )
-                ],
-              ),
+            TextFormField(
+              controller: _controller,
+              decoration: InputDecoration(hintText: "Enter Folder Name"),
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: jsonlist
-                      .map((e) => Row(
-                            children: [
-                              Container(
-                                height: 120,
-                                width: MediaQuery.of(context).size.width / 2,
-                                margin: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10)),
-                                child: Text(""),
-                              ),
-                              Column(
-                                children: [
-                                  Container(
-                                      width: MediaQuery.of(context).size.width /
-                                          2.5,
-                                      child: Text(
-                                        "${e['title']}",
-                                        maxLines: 2,
-                                        style: TextStyle(fontSize: 18),
-                                      )),
-                                  Container(
-                                      width: MediaQuery.of(context).size.width /
-                                          2.5,
-                                      child: Text(
-                                        "${e['body']}",
-                                        maxLines: 2,
-                                        style: TextStyle(color: Colors.white),
-                                      )),
-                                ],
-                              )
-                            ],
-                          ))
-                      .toList(),
-                ),
-              ),
-            )
+            SizedBox(
+              height: 20,
+            ),
+            ElevatedButton(
+                onPressed: () async {
+                  if (await Permission.manageExternalStorage
+                      .request()
+                      .isGranted) {
+                    if (_controller.text.isNotEmpty) {
+                      Folder(_controller.text);
+                    } else {
+                      print("Enter folder name");
+                    }
+                  }
+                },
+                child: Text("Create"))
           ],
         ),
       ),
