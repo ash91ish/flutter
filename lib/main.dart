@@ -66,8 +66,8 @@ class _HeroUiState extends State<HeroUi> {
                   },
                   child: Container(
                     margin: EdgeInsets.all(20),
-                    height: 200,
-                    width: 200,
+                    height: 100,
+                    width: 100,
                     child: Hero(
                       tag: "$i",
                       child: CircleAvatar(
